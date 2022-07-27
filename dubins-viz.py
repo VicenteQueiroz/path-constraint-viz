@@ -34,10 +34,10 @@ N = 2
 # xmin = 0
 xmax = 10
 # x = np.linspace(xmin, xmax, N)
-x = dubins_xx
+x = [p0[0], p1[0]]
 
 # spline fit
-yvals = dubins_yy
+yvals = [p0[1], p1[1]]
 # yvals = func(x)
 # spline = inter.InterpolatedUnivariateSpline(x, yvals)
 
@@ -55,29 +55,32 @@ epsilon = 5  # max pixel distance
 
 def update(val):
     global yvals
-    global spline
+    # global spline
     # update curve
     # for i in np.arange(N):
     #     yvals[i] = sliders[i].val
     l.set_ydata(yvals)
-    spline = inter.InterpolatedUnivariateSpline(x, yvals)
-    m.set_ydata(spline(X))
+    # spline = inter.InterpolatedUnivariateSpline(x, yvals)
+    dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+        [x[0], yvals[0], theta0], [x[1], yvals[1], theta1], turning_radius
+    )
+    m.set_xdata(dubins_xx)
+    m.set_ydata(dubins_yy)
 
-    dubins_xx, dubins_yy, dubins_yaws = dubins_path(p0, p1, turning_radius)
     # redraw canvas while idle
     fig.canvas.draw_idle()
 
 
 def reset(event):
     global yvals
-    global spline
+    # global spline
     # reset the values
     yvals = func(x)
     for i in np.arange(N):
         sliders[i].reset()
-    spline = inter.InterpolatedUnivariateSpline(x, yvals)
+    # spline = inter.InterpolatedUnivariateSpline(x, yvals)
     l.set_ydata(yvals)
-    m.set_ydata(spline(X))
+    # m.set_ydata(spline(X))
     # redraw canvas while idle
     fig.canvas.draw_idle()
 
@@ -151,8 +154,8 @@ def motion_notify_callback(event):
 
 # Draggable Points
 (l,) = ax1.plot(
-    [p0[0], p1[0]],
-    [p0[1], p1[1]],
+    x,
+    yvals,
     color="k",
     linestyle="none",
     marker="o",
