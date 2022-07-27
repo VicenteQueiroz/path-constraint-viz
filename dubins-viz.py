@@ -9,20 +9,17 @@ import numpy as np
 from dubins_path import dubins_path
 
 
-theta0 = 0
-theta1 = 0.1
-p0 = (1, 1, theta0)
-p1 = (3, 3, theta1)
-turning_radius = 1.0
+theta0 = 160
+theta1 = 160
+
+p0 = (2, 2, theta0)
+p1 = (8, 8, theta1)
+turning_radius = 1
 step_size = 0.5
 
 # path = dubins.shortest_path()
 # path = dubins.shortest_path(p0, p1, turning_radius)
 dubins_xx, dubins_yy, dubins_yaws = dubins_path(p0, p1, turning_radius)
-
-print("dubins_xx: ", dubins_xx)
-print("dubins_yy: ", dubins_yy)
-print("dubins_yaws: ", dubins_yaws)
 
 # configurations, _ = path.sample_many(step_size)
 
@@ -57,15 +54,20 @@ epsilon = 5  # max pixel distance
 def update(val):
     global x
     global yvals
+    global thetavals
     # global spline
     # update curve
-    # for i in np.arange(N):
-    #     yvals[i] = sliders[i].val
+    for i in np.arange(N):
+        thetavals[i] = sliders[i].val
+    turning_radius = sliders[len(sliders) - 1].val
+
     l.set_xdata(x)
     l.set_ydata(yvals)
     # spline = inter.InterpolatedUnivariateSpline(x, yvals)
     dubins_xx, dubins_yy, dubins_yaws = dubins_path(
-        [x[0], yvals[0], thetavals[0]], [x[1], yvals[1], thetavals[1]], turning_radius
+        [x[0], yvals[0], thetavals[0]],
+        [x[1], yvals[1], thetavals[1]],
+        1 / turning_radius,
     )
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
@@ -74,15 +76,46 @@ def update(val):
     fig.canvas.draw_idle()
 
 
+def turningRadiusUpdate(val):
+    global turning_radius
+
+    turning_radius = sliders[len(sliders) - 1].val
+
+    print("turning_radius: ", turning_radius)
+
+    dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+        [x[0], yvals[0], thetavals[0]],
+        [x[1], yvals[1], thetavals[1]],
+        1 / turning_radius,
+    )
+    m.set_xdata(dubins_xx)
+    m.set_ydata(dubins_yy)
+    fig.canvas.draw_idle()
+
+
 def reset(event):
     global yvals
     # global spline
     # reset the values
-    yvals = func(x)
-    for i in np.arange(N):
+    x = [p0[0], p1[0]]
+    yvals = [p0[1], p1[1]]
+    thetavals = [theta0, theta1]
+    turning_radius = 1
+
+    for i in np.arange(len(sliders)):
         sliders[i].reset()
     # spline = inter.InterpolatedUnivariateSpline(x, yvals)
+    l.set_xdata(x)
     l.set_ydata(yvals)
+
+    dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+        [x[0], yvals[0], thetavals[0]],
+        [x[1], yvals[1], thetavals[1]],
+        1 / turning_radius,
+    )
+    m.set_xdata(dubins_xx)
+    m.set_ydata(dubins_yy)
+
     # m.set_ydata(spline(X))
     # redraw canvas while idle
     fig.canvas.draw_idle()
@@ -137,6 +170,9 @@ def motion_notify_callback(event):
     "on mouse movement"
     global x
     global yvals
+    global thetavals
+    global turning_radius
+
     if pind is None:
         return
     if event.inaxes is None:
@@ -149,8 +185,11 @@ def motion_notify_callback(event):
     x[pind] = event.xdata
     yvals[pind] = event.ydata
 
+    print("thetavals[pind]: ", thetavals[pind])
+
     # update curve via sliders and draw
-    sliders[pind].set_val(yvals[pind])
+    sliders[pind].set_val(thetavals[pind])
+    # sliders[pind].set_val(yvals[pind])
     fig.canvas.draw_idle()
 
 
@@ -186,17 +225,24 @@ ax1.legend(loc=2, prop={"size": 22})
 
 sliders = []
 
+# Define the p0 and p1 angle sliders
 for i in np.arange(2):
 
     axamp = plt.axes([0.84, 0.8 - (i * 0.05), 0.12, 0.02])
     # Slider
-    s = Slider(axamp, "p{0}".format(i), 0, 10, valinit=yvals[i])
+    s = Slider(axamp, "θ{0}".format(i), 0, 360, valinit=thetavals[i])
     sliders.append(s)
 
 
 for i in np.arange(2):
     # samp.on_changed(update_slider)
     sliders[i].on_changed(update)
+
+# Add turning radius slider
+axamp = plt.axes([0.84, 0.8 - (3 * 0.05), 0.12, 0.02])
+s = Slider(axamp, "turning radius", 0.1, 5, valinit=turning_radius)
+sliders.append(s)
+sliders[len(sliders) - 1].on_changed(turningRadiusUpdate)
 
 axres = plt.axes([0.84, 0.8 - ((N) * 0.05), 0.12, 0.02])
 bres = Button(axres, "Reset")

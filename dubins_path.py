@@ -305,7 +305,14 @@ def calc_dubins_path(sx, sy, syaw, gx, gy, gyaw, curv, step_size=0.1):
 
 def dubins_path(x, y, turning_radius, step_size=0.1):
     path = calc_dubins_path(
-        x[0], x[1], x[2], y[0], y[1], y[2], turning_radius, step_size
+        x[0],
+        x[1],
+        math.radians(x[2]),
+        y[0],
+        y[1],
+        math.radians(y[2]),
+        turning_radius,
+        step_size,
     )
 
     dubins_xx = []
