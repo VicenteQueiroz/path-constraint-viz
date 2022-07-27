@@ -38,6 +38,7 @@ x = [p0[0], p1[0]]
 
 # spline fit
 yvals = [p0[1], p1[1]]
+thetavals = [theta0, theta1]
 # yvals = func(x)
 # spline = inter.InterpolatedUnivariateSpline(x, yvals)
 
@@ -54,15 +55,17 @@ epsilon = 5  # max pixel distance
 
 
 def update(val):
+    global x
     global yvals
     # global spline
     # update curve
     # for i in np.arange(N):
     #     yvals[i] = sliders[i].val
+    l.set_xdata(x)
     l.set_ydata(yvals)
     # spline = inter.InterpolatedUnivariateSpline(x, yvals)
     dubins_xx, dubins_yy, dubins_yaws = dubins_path(
-        [x[0], yvals[0], theta0], [x[1], yvals[1], theta1], turning_radius
+        [x[0], yvals[0], thetavals[0]], [x[1], yvals[1], thetavals[1]], turning_radius
     )
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
@@ -132,6 +135,7 @@ def get_ind_under_point(event):
 
 def motion_notify_callback(event):
     "on mouse movement"
+    global x
     global yvals
     if pind is None:
         return
@@ -142,6 +146,7 @@ def motion_notify_callback(event):
 
     # update yvals
     # print('motion x: {0}; y: {1}'.format(event.xdata,event.ydata))
+    x[pind] = event.xdata
     yvals[pind] = event.ydata
 
     # update curve via sliders and draw
