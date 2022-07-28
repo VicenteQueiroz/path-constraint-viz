@@ -4,9 +4,9 @@ A Visualizer of path constraints in Python using MatplotLib
 
 # Requirements
 
-- dubins
+- scipy
 - matplotlib
 
-# Installation
+# Usage
 
-pip3 install dubins
+`python3 dubins-viz.py`
