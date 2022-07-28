@@ -1,17 +1,13 @@
-import matplotlib.animation as animation
 from matplotlib.widgets import Slider, Button
 import matplotlib as mpl
 from matplotlib import pyplot as plt
-import scipy.interpolate as inter
 import numpy as np
 import math
 
 # import dubins
 from dubins_path import dubins_path
 
-theta0 = 160
-theta1 = 160
-
+# Initial conditions for plot
 theta0 = 0
 theta1 = 160
 
@@ -20,27 +16,13 @@ p1 = (8, 8, theta1)
 turning_radius = 1
 step_size = 0.5
 
-# path = dubins.shortest_path()
-# path = dubins.shortest_path(p0, p1, turning_radius)
 dubins_xx, dubins_yy, dubins_yaws = dubins_path(p0, p1, turning_radius)
 
-# configurations, _ = path.sample_many(step_size)
-
-
-func = lambda x: 0.1 * x ** 2
-
-# get a list of points to fit a spline to as well
 N = 2
-# xmin = 0
 xmax = 10
-# x = np.linspace(xmin, xmax, N)
 x = [p0[0], p1[0]]
-
-# spline fit
 yvals = [p0[1], p1[1]]
 thetavals = [theta0, theta1]
-# yvals = func(x)
-# spline = inter.InterpolatedUnivariateSpline(x, yvals)
 
 # figure.subplot.right
 mpl.rcParams["figure.subplot.right"] = 0.8
@@ -48,10 +30,8 @@ mpl.rcParams["figure.subplot.right"] = 0.8
 # set up a plot
 fig, axes = plt.subplots(1, 1, figsize=(9.0, 8.0), sharex=True)
 ax1 = axes
-
-
 pind = None  # active point
-epsilon = 5  # max pixel distance
+epsilon = 10  # max pixel distance
 
 
 def update(val):
@@ -61,15 +41,16 @@ def update(val):
     global arrow0
     global arrow1
 
-    # global spline
-    # update curve
+    # update value of sliders
     for i in np.arange(N):
         thetavals[i] = sliders[i].val
     turning_radius = sliders[len(sliders) - 1].val
 
+    # update p0 and p1 positions
     l.set_xdata(x)
     l.set_ydata(yvals)
-    # spline = inter.InterpolatedUnivariateSpline(x, yvals)
+
+    # update the dubins curve
     dubins_xx, dubins_yy, dubins_yaws = dubins_path(
         [x[0], yvals[0], thetavals[0]],
         [x[1], yvals[1], thetavals[1]],
@@ -78,8 +59,7 @@ def update(val):
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
 
-    # Clean arrows
-    print("arrow0: ", arrow0)
+    # clean arrows and update them
     try:
         arrow0.remove()
         arrow1.remove()
@@ -111,6 +91,7 @@ def update(val):
     # fig.canvas.draw_idle()
 
 
+# Update the turning radius slider
 def turningRadiusUpdate(val):
     global turning_radius
 
@@ -123,7 +104,6 @@ def turningRadiusUpdate(val):
     )
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
-    fig.canvas.draw_idle()
 
 
 def reset(event):
@@ -177,10 +157,6 @@ def reset(event):
         fc="k",
         ec="k",
     )
-
-    # m.set_ydata(spline(X))
-    # redraw canvas while idle
-    fig.canvas.draw_idle()
 
 
 def button_press_callback(event):
@@ -240,19 +216,15 @@ def motion_notify_callback(event):
     if event.button != 1:
         return
 
-    # update yvals
+    # update x and yvals
     # print('motion x: {0}; y: {1}'.format(event.xdata,event.ydata))
     x[pind] = event.xdata
     yvals[pind] = event.ydata
 
-    # update curve via sliders and draw
+    # update theha of p0 and p1
     sliders[pind].set_val(thetavals[pind])
-    # sliders[pind].set_val(yvals[pind])
     fig.canvas.draw_idle()
 
-
-# X = np.arange(0, xmax + 1, 0.1)
-# ax1.plot(X, func(X), "k--", label="original")
 
 # Draggable Points
 (l,) = ax1.plot(
@@ -263,8 +235,6 @@ def motion_notify_callback(event):
     marker="o",
     markersize=8,
 )
-
-# (l,) = ax1.plot(x, yvals, color="k", linestyle="none", marker="o", markersize=8)
 
 arrow0 = ax1.arrow(
     x[0],
@@ -289,8 +259,6 @@ arrow1 = ax1.arrow(
 
 # Dubins curve
 (m,) = ax1.plot(dubins_xx, dubins_yy, "r-", label="dubins")
-# (m,) = ax1.plot(X, spline(X), "r-", label="dubins")
-
 
 ax1.set_yscale("linear")
 ax1.set_xlim(0, xmax)
@@ -299,7 +267,7 @@ ax1.set_xlabel("x")
 ax1.set_ylabel("y")
 ax1.grid(True)
 ax1.yaxis.grid(True, which="minor", linestyle="--")
-ax1.legend(loc=2, prop={"size": 22})
+ax1.legend(loc=2, prop={"size": 12})
 
 sliders = []
 
@@ -313,12 +281,11 @@ for i in np.arange(2):
 
 
 for i in np.arange(2):
-    # samp.on_changed(update_slider)
     sliders[i].on_changed(update)
 
 # Add turning radius slider
 axamp = plt.axes([0.84, 0.8 - (3 * 0.05), 0.12, 0.02])
-s = Slider(axamp, "turning radius", 0.1, 5, valinit=turning_radius)
+s = Slider(axamp, "curv", 0.1, 5, valinit=turning_radius)
 sliders.append(s)
 sliders[len(sliders) - 1].on_changed(turningRadiusUpdate)
 
