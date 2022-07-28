@@ -9,7 +9,6 @@ import math
 # import dubins
 from dubins_path import dubins_path
 
-
 theta0 = 160
 theta1 = 160
 
@@ -62,10 +61,6 @@ def update(val):
     global arrow0
     global arrow1
 
-    # Clean arrows
-    arrow0.remove()
-    arrow1.remove()
-
     # global spline
     # update curve
     for i in np.arange(N):
@@ -83,26 +78,34 @@ def update(val):
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
 
-    arrow0 = ax1.arrow(
-        x[0],
-        yvals[0],
-        math.cos(math.radians(thetavals[0])),
-        math.sin(math.radians(thetavals[0])),
-        head_width=0.05,
-        head_length=0.1,
-        fc="k",
-        ec="k",
-    )
-    arrow1 = ax1.arrow(
-        x[1],
-        yvals[1],
-        math.cos(math.radians(thetavals[1])),
-        math.sin(math.radians(thetavals[1])),
-        head_width=0.05,
-        head_length=0.1,
-        fc="k",
-        ec="k",
-    )
+    # Clean arrows
+    print("arrow0: ", arrow0)
+    try:
+        arrow0.remove()
+        arrow1.remove()
+
+        arrow0 = ax1.arrow(
+            x[0],
+            yvals[0],
+            math.cos(math.radians(thetavals[0])),
+            math.sin(math.radians(thetavals[0])),
+            head_width=0.05,
+            head_length=0.1,
+            fc="k",
+            ec="k",
+        )
+        arrow1 = ax1.arrow(
+            x[1],
+            yvals[1],
+            math.cos(math.radians(thetavals[1])),
+            math.sin(math.radians(thetavals[1])),
+            head_width=0.05,
+            head_length=0.1,
+            fc="k",
+            ec="k",
+        )
+    except:
+        print("No arrow to remove")
 
     # redraw canvas while idle
     # fig.canvas.draw_idle()
@@ -124,6 +127,8 @@ def turningRadiusUpdate(val):
 
 
 def reset(event):
+    global x
+    global thetavals
     global yvals
     global arrow0
     global arrow1
@@ -260,6 +265,7 @@ def motion_notify_callback(event):
 )
 
 # (l,) = ax1.plot(x, yvals, color="k", linestyle="none", marker="o", markersize=8)
+
 arrow0 = ax1.arrow(
     x[0],
     yvals[0],
@@ -320,6 +326,7 @@ axres = plt.axes([0.84, 0.8 - ((N) * 0.05), 0.12, 0.02])
 bres = Button(axres, "Reset")
 bres.on_clicked(reset)
 
+fig.canvas.set_window_title("Dubins Visualizer")
 fig.canvas.mpl_connect("button_press_event", button_press_callback)
 fig.canvas.mpl_connect("button_release_event", button_release_callback)
 fig.canvas.mpl_connect("motion_notify_event", motion_notify_callback)
