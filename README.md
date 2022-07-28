@@ -11,4 +11,6 @@ A Visualizer of path constraints in Python using MatplotLib
 
 # Usage
 
-`python3 dubins-viz.py`
+```
+python3 dubins-viz.py
+```
