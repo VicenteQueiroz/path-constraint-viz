@@ -4,12 +4,16 @@ import matplotlib as mpl
 from matplotlib import pyplot as plt
 import scipy.interpolate as inter
 import numpy as np
+import math
 
 # import dubins
 from dubins_path import dubins_path
 
 
 theta0 = 160
+theta1 = 160
+
+theta0 = 0
 theta1 = 160
 
 p0 = (2, 2, theta0)
@@ -55,6 +59,13 @@ def update(val):
     global x
     global yvals
     global thetavals
+    global arrow0
+    global arrow1
+
+    # Clean arrows
+    arrow0.remove()
+    arrow1.remove()
+
     # global spline
     # update curve
     for i in np.arange(N):
@@ -72,16 +83,35 @@ def update(val):
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
 
+    arrow0 = ax1.arrow(
+        x[0],
+        yvals[0],
+        math.cos(math.radians(thetavals[0])),
+        math.sin(math.radians(thetavals[0])),
+        head_width=0.05,
+        head_length=0.1,
+        fc="k",
+        ec="k",
+    )
+    arrow1 = ax1.arrow(
+        x[1],
+        yvals[1],
+        math.cos(math.radians(thetavals[1])),
+        math.sin(math.radians(thetavals[1])),
+        head_width=0.05,
+        head_length=0.1,
+        fc="k",
+        ec="k",
+    )
+
     # redraw canvas while idle
-    fig.canvas.draw_idle()
+    # fig.canvas.draw_idle()
 
 
 def turningRadiusUpdate(val):
     global turning_radius
 
     turning_radius = sliders[len(sliders) - 1].val
-
-    print("turning_radius: ", turning_radius)
 
     dubins_xx, dubins_yy, dubins_yaws = dubins_path(
         [x[0], yvals[0], thetavals[0]],
@@ -95,7 +125,13 @@ def turningRadiusUpdate(val):
 
 def reset(event):
     global yvals
-    # global spline
+    global arrow0
+    global arrow1
+
+    # Clean arrows
+    arrow0.remove()
+    arrow1.remove()
+
     # reset the values
     x = [p0[0], p1[0]]
     yvals = [p0[1], p1[1]]
@@ -116,6 +152,27 @@ def reset(event):
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
 
+    arrow0 = ax1.arrow(
+        x[0],
+        yvals[0],
+        math.cos(math.radians(thetavals[0])),
+        math.sin(math.radians(thetavals[0])),
+        head_width=0.05,
+        head_length=0.1,
+        fc="k",
+        ec="k",
+    )
+    arrow1 = ax1.arrow(
+        x[1],
+        yvals[1],
+        math.cos(math.radians(thetavals[1])),
+        math.sin(math.radians(thetavals[1])),
+        head_width=0.05,
+        head_length=0.1,
+        fc="k",
+        ec="k",
+    )
+
     # m.set_ydata(spline(X))
     # redraw canvas while idle
     fig.canvas.draw_idle()
@@ -128,7 +185,6 @@ def button_press_callback(event):
         return
     if event.button != 1:
         return
-    # print(pind)
     pind = get_ind_under_point(event)
 
 
@@ -171,7 +227,6 @@ def motion_notify_callback(event):
     global x
     global yvals
     global thetavals
-    global turning_radius
 
     if pind is None:
         return
@@ -184,8 +239,6 @@ def motion_notify_callback(event):
     # print('motion x: {0}; y: {1}'.format(event.xdata,event.ydata))
     x[pind] = event.xdata
     yvals[pind] = event.ydata
-
-    print("thetavals[pind]: ", thetavals[pind])
 
     # update curve via sliders and draw
     sliders[pind].set_val(thetavals[pind])
@@ -205,11 +258,30 @@ def motion_notify_callback(event):
     marker="o",
     markersize=8,
 )
+
 # (l,) = ax1.plot(x, yvals, color="k", linestyle="none", marker="o", markersize=8)
+arrow0 = ax1.arrow(
+    x[0],
+    yvals[0],
+    math.cos(math.radians(thetavals[0])),
+    math.sin(math.radians(thetavals[0])),
+    head_width=0.05,
+    head_length=0.1,
+    fc="k",
+    ec="k",
+)
+arrow1 = ax1.arrow(
+    x[1],
+    yvals[1],
+    math.cos(math.radians(thetavals[1])),
+    math.sin(math.radians(thetavals[1])),
+    head_width=0.05,
+    head_length=0.1,
+    fc="k",
+    ec="k",
+)
 
 # Dubins curve
-# print("X: ", X)
-# print("spline(X): ", spline(X))
 (m,) = ax1.plot(dubins_xx, dubins_yy, "r-", label="dubins")
 # (m,) = ax1.plot(X, spline(X), "r-", label="dubins")
 
