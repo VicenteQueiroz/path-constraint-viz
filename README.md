@@ -2,6 +2,8 @@
 
 A Visualizer of path constraints in Python using MatplotLib
 
+![](https://github.com/VicenteQueiroz/path-constraint-viz/blob/main/dubins_demo.gif)
+
 # Requirements
 
 - scipy
