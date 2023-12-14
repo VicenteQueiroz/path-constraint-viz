@@ -38,7 +38,7 @@ import numpy as np
 import math
 
 # import dubins
-from dubins_path import dubins_path
+from dubins_path import dubins_path, optimized_dubins_path
 
 # Initial conditions for plot
 theta0 = 0
@@ -49,7 +49,8 @@ p1 = (8, 8, theta1)
 turning_radius = 1
 step_size = 0.5
 
-dubins_xx, dubins_yy, dubins_yaws = dubins_path(p0, p1, turning_radius)
+# dubins_xx, dubins_yy, dubins_yaws = dubins_path(p0, p1, turning_radius)
+dubins_xx, dubins_yy, dubins_yaws = optimized_dubins_path(p0, p1)
 
 N = 2
 xmax = 10
@@ -84,10 +85,13 @@ def update(val):
     l.set_ydata(yvals)
 
     # update the dubins curve
-    dubins_xx, dubins_yy, dubins_yaws = dubins_path(
-        [x[0], yvals[0], thetavals[0]],
-        [x[1], yvals[1], thetavals[1]],
-        1 / turning_radius,
+    # dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+    #     [x[0], yvals[0], thetavals[0]],
+    #     [x[1], yvals[1], thetavals[1]],
+    #     1 / turning_radius,
+    # )
+    dubins_xx, dubins_yy, dubins_yaws = optimized_dubins_path(
+        [x[0], yvals[0], thetavals[0]], [x[1], yvals[1], thetavals[1]]
     )
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
@@ -130,10 +134,14 @@ def turningRadiusUpdate(val):
 
     turning_radius = sliders[len(sliders) - 1].val
 
-    dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+    # dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+    #     [x[0], yvals[0], thetavals[0]],
+    #     [x[1], yvals[1], thetavals[1]],
+    #     1 / turning_radius,
+    # )
+    dubins_xx, dubins_yy, dubins_yaws = optimized_dubins_path(
         [x[0], yvals[0], thetavals[0]],
         [x[1], yvals[1], thetavals[1]],
-        1 / turning_radius,
     )
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
@@ -162,11 +170,16 @@ def reset(event):
     l.set_xdata(x)
     l.set_ydata(yvals)
 
-    dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+    # dubins_xx, dubins_yy, dubins_yaws = dubins_path(
+    #     [x[0], yvals[0], thetavals[0]],
+    #     [x[1], yvals[1], thetavals[1]],
+    #     1 / turning_radius,
+    # )
+    dubins_xx, dubins_yy, dubins_yaws = optimized_dubins_path(
         [x[0], yvals[0], thetavals[0]],
         [x[1], yvals[1], thetavals[1]],
-        1 / turning_radius,
     )
+
     m.set_xdata(dubins_xx)
     m.set_ydata(dubins_yy)
 
@@ -306,7 +319,6 @@ sliders = []
 
 # Define the p0 and p1 angle sliders
 for i in np.arange(2):
-
     axamp = plt.axes([0.84, 0.8 - (i * 0.05), 0.12, 0.02])
     # Slider
     s = Slider(axamp, "θ{0}".format(i), 0, 360, valinit=thetavals[i])

@@ -2,6 +2,9 @@ import numpy as np
 import math
 from pydrake.all import MathematicalProgram, Solve, eq, le, sin, cos, sqrt
 
+x_prev = None
+y_prev = None
+theta_prev = None
 
 def solve_traj_opt_ackerman(
     x_initial, y_initial, theta_initial, x_final, y_final, theta_final
@@ -15,6 +18,9 @@ def solve_traj_opt_ackerman(
     max_w = 2.0  # maximum angular velocity
     max_v_steer = 0.5  # maximum steering linear velocity
     delta_max = math.pi / 6  # maximum steering angle
+
+    def deg2rads(angle):
+        return angle / 180 * math.pi
 
     # Define the Runge-Kutta method
     def rk4_step(f, x, u, h):
@@ -65,17 +71,26 @@ def solve_traj_opt_ackerman(
     # Add the initial and final position and orientation constraints
     prog.AddLinearConstraint(x[0] == x_initial)
     prog.AddLinearConstraint(y[0] == y_initial)
-    prog.AddLinearConstraint(theta[0] == theta_initial)
-    prog.AddLinearConstraint(x[-1] == x_final)
-    prog.AddLinearConstraint(y[-1] == y_final)
-    prog.AddLinearConstraint(theta[-1] == theta_final)
+    prog.AddLinearConstraint(theta[0] == deg2rads(theta_initial))
+    prog.AddLinearConstraint(theta[1] == deg2rads(theta_initial))
+    prog.AddLinearConstraint(theta[2] == deg2rads(theta_initial))
+    prog.AddLinearConstraint(theta[3] == deg2rads(theta_initial))
+    prog.AddLinearConstraint(theta[4] == deg2rads(theta_initial))
+    prog.AddLinearConstraint(x[N] == x_final)
+    prog.AddLinearConstraint(y[N] == y_final)
+    prog.AddLinearConstraint(theta[N] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[N] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[N-1] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[N-2] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[N-3] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[N-4] == deg2rads(theta_final))
 
     # Add the dynamic constraints
     for i in range(0, N - 1):
         prog.AddConstraint(x[i + 1] == x[i] + v[i] * cos(theta[i]) * h)
         prog.AddConstraint(y[i + 1] == y[i] + v[i] * sin(theta[i]) * h)
         prog.AddConstraint(theta[i + 1] == theta[i] + w[i] * h)
-        prog.AddCost(h)
+        #prog.AddCost(h)
 
     # Add the control constraints
     for i in range(0, N):
@@ -173,15 +188,21 @@ def solve_traj_opt_ackerman(
     # prog.SetInitialGuess(v, v_guess)
     # prog.SetInitialGuess(w, w_guess)
 
-    # Add the initial guess
-    for i in range(N + 1):
-        prog.SetInitialGuess(x[i], (i * x_final + (N - i) * x_initial) / N)
-        prog.SetInitialGuess(y[i], (i * y_final + (N - i) * y_initial) / N)
-        prog.SetInitialGuess(theta[i], (i * theta_initial + (N - i) * 0) / N)
+    if not x_prev:
+        # Add the initial guess
+        for i in range(N + 1):
+            prog.SetInitialGuess(x[i], (i * x_final + (N - i) * x_initial) / N)
+            prog.SetInitialGuess(y[i], (i * y_final + (N - i) * y_initial) / N)
+            prog.SetInitialGuess(theta[i], (i * theta_initial + (N - i) * 0) / N)
 
-    for i in range(N):
-        prog.SetInitialGuess(v[i], max_v / 2 * (1 - np.cos(i * np.pi / N)))
-        prog.SetInitialGuess(w[i], 0)
+        for i in range(N):
+            prog.SetInitialGuess(v[i], max_v / 2 * (1 - np.cos(i * np.pi / N)))
+            prog.SetInitialGuess(w[i], 0)
+    else:
+        for i in range(N):
+            prog.SetInitialGuess(x[i], x_prev[i])
+            prog.SetInitialGuess(y[i], y_prev[i])
+            prog.SetInitialGuess(theta[i], theta_prev[i])
 
     # Solve the optimization problem
     result = Solve(prog)
@@ -191,6 +212,8 @@ def solve_traj_opt_ackerman(
     x_opt = result.GetSolution(x)
     y_opt = result.GetSolution(y)
     theta_opt = result.GetSolution(theta)
+
+    print("theta_opt:", theta_opt)
 
     # print("v_opt: ", v_opt)
     # print("w_opt: ", w_opt)

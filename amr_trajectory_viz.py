@@ -46,7 +46,13 @@ import math
 # import trajectory optimizer
 from traj_opt import solve_traj_opt
 from traj_opt_ackerman import solve_traj_opt_ackerman
+from iLQR import ILQR
+from NMPC import NMPC
 
+# Instantiate ilqr
+ilqr = ILQR()
+# Instantiate NPMC
+npmc = NMPC()
 
 # Initial conditions for plot
 theta0 = 0
@@ -63,9 +69,7 @@ x = [p0[0], p1[0]]
 yvals = [p0[1], p1[1]]
 thetavals = [theta0, theta1]
 
-traj_xx, traj_yy, traj_yaws = solve_traj_opt_ackerman(
-    p0[0], p0[1], p0[2], p1[0], p1[1], p1[2]
-)
+traj_xx, traj_yy, traj_yaws = npmc.solve_nmpc(p0[0], p0[1], p0[2], p1[0], p1[1], p1[2])
 
 # figure.subplot.right
 mpl.rcParams["figure.subplot.right"] = 0.8
@@ -95,7 +99,7 @@ def update(val):
 
     # update the trajectory optmization problem
 
-    traj_xx, traj_yy, traj_yaws = solve_traj_opt_ackerman(
+    traj_xx, traj_yy, traj_yaws = npmc.solve_nmpc(
         x[0],
         yvals[0],
         thetavals[0],
@@ -294,6 +298,7 @@ ax1.set_xlim(0, xmax)
 ax1.set_ylim(0, xmax)
 ax1.set_xlabel("x")
 ax1.set_ylabel("y")
+ax1.set_title("NMPC")
 ax1.grid(True)
 ax1.yaxis.grid(True, which="minor", linestyle="--")
 ax1.legend(loc=2, prop={"size": 12})
@@ -309,7 +314,6 @@ sliders = []
 
 # Define the p0 and p1 angle sliders
 for i in np.arange(2):
-
     axamp = plt.axes([0.84, 0.8 - (i * 0.05), 0.12, 0.02])
     # Slider
     s = Slider(axamp, "theta{0}".format(i), 0, 360, valinit=thetavals[i])
@@ -327,5 +331,6 @@ fig.canvas.set_window_title("Trajectory Optimization Problem")
 fig.canvas.mpl_connect("button_press_event", button_press_callback)
 fig.canvas.mpl_connect("button_release_event", button_release_callback)
 fig.canvas.mpl_connect("motion_notify_event", motion_notify_callback)
+
 
 plt.show()

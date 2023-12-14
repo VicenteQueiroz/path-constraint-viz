@@ -345,3 +345,91 @@ def dubins_path(x, y, turning_radius, step_size=0.1):
         dubins_yaws.append(iyaw)
 
     return dubins_xx, dubins_yy, dubins_yaws
+
+def has_loops(path, turning_radius, threshold_distance=0.1):
+    # Get the coordinates of the path
+    dubins_xx = []
+    dubins_yy = []
+    dubins_yaws = []
+
+    for x, y, iyaw in zip(path.x, path.y, path.yaw):
+        dubins_xx.append(x)
+        dubins_yy.append(y)
+        dubins_yaws.append(iyaw)
+
+    # Ensure that all three arrays have the same length
+    if len(dubins_xx) != len(dubins_yy) or len(dubins_xx) != len(dubins_yaws):
+        raise ValueError("Arrays must have the same length.")
+    
+    loop_length = 2 * math.pi * turning_radius
+
+    path_length = 0.0
+    # find the path length
+    for i in range(1, len(dubins_xx)):
+        dx = dubins_xx[i] - dubins_xx[i - 1]
+        dy = dubins_yy[i] - dubins_yy[i - 1]
+        distance = math.sqrt(dx ** 2 + dy ** 2)
+        path_length += distance
+
+    # find straight line path length
+    straight_line_distance = math.sqrt((dubins_xx[-1] - dubins_xx[0]) ** 2 + (dubins_yy[-1] - dubins_yy[0]) ** 2)
+
+    margin = 0.5    # We consider 50% of a loop, the max amount by which a plan may deviate from a straight line.
+    if (path_length - straight_line_distance) > margin * loop_length:
+        return True
+    
+    return False
+    
+
+# Optimized dubins path: will find the best dubins path that won't create a loop
+def optimized_dubins_path(x, y, step_size=0.1):
+    initial_turning_radius = 5
+
+    min_radius = 0.1
+    max_radius = initial_turning_radius
+    max_turning_radius = initial_turning_radius
+    
+    while (max_radius - min_radius) >= step_size:
+        turning_radius = (max_radius + min_radius) / 2
+        
+        path = calc_dubins_path(
+            x[0],
+            x[1],
+            math.radians(x[2]),
+            y[0],
+            y[1],
+            math.radians(y[2]),
+            1.0 / turning_radius,
+            step_size,
+        )
+        
+        if not has_loops(path, turning_radius):
+            min_radius = turning_radius
+            max_turning_radius = turning_radius
+        else:
+            max_radius = turning_radius
+
+    print("max turning radius without loop: ", max_turning_radius)
+    path = calc_dubins_path(
+    x[0],
+    x[1],
+    math.radians(x[2]),
+    y[0],
+    y[1],
+    math.radians(y[2]),
+    1.0 / max_turning_radius,
+    step_size,
+)
+        
+    # Get the coordinates of the last optimal path
+    dubins_xx = []
+    dubins_yy = []
+    dubins_yaws = []
+
+    for x, y, iyaw in zip(path.x, path.y, path.yaw):
+        dubins_xx.append(x)
+        dubins_yy.append(y)
+        dubins_yaws.append(iyaw)
+    
+
+    return dubins_xx, dubins_yy, dubins_yaws

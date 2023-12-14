@@ -6,6 +6,9 @@ import math
 
 def solve_traj_opt(x_initial, y_initial, theta_initial, x_final, y_final, theta_final):
 
+    def deg2rads(angle):
+        return angle / 180 * math.pi
+
     # Create the optimization problem
     prog = MathematicalProgram()
 
@@ -31,21 +34,26 @@ def solve_traj_opt(x_initial, y_initial, theta_initial, x_final, y_final, theta_
     v = prog.NewContinuousVariables(n_timesteps, "v")
     w = prog.NewContinuousVariables(n_timesteps, "w")
 
-    # Add a cost that minimizes the final time tf
-    tf = prog.NewContinuousVariables(1, "tf")[0]
-    prog.AddCost(tf)
+    # # Add a cost that minimizes the final time tf
+    # tf = prog.NewContinuousVariables(1, "tf")[0]
+    # prog.AddCost(tf)
 
-    # Add a constraint that sets the final time to be greater than the initial time
-    t0 = 0.0
-    prog.AddLinearConstraint(tf >= t0)
+    # # Add a constraint that sets the final time to be greater than the initial time
+    # t0 = 0.0
+    # prog.AddLinearConstraint(tf >= t0)
 
     # Add the initial and final position and orientation constraints
     prog.AddLinearConstraint(x[0] == x_initial)
     prog.AddLinearConstraint(y[0] == y_initial)
-    prog.AddLinearConstraint(theta[0] == theta_initial)
-    prog.AddLinearConstraint(x[-1] == x_final)
-    prog.AddLinearConstraint(y[-1] == y_final)
-    prog.AddLinearConstraint(theta[-1] == theta_final)
+    prog.AddLinearConstraint(theta[0] == deg2rads(theta_initial))
+
+    prog.AddLinearConstraint(x[n_timesteps] == x_final)
+    prog.AddLinearConstraint(y[n_timesteps] == y_final)
+    prog.AddLinearConstraint(theta[n_timesteps] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[n_timesteps-1] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[n_timesteps-2] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[n_timesteps-3] == deg2rads(theta_final))
+    prog.AddLinearConstraint(theta[n_timesteps-4] == deg2rads(theta_final))
 
     # Add the dynamics constraints for each timestep
     for k in range(n_timesteps - 1):
@@ -62,8 +70,9 @@ def solve_traj_opt(x_initial, y_initial, theta_initial, x_final, y_final, theta_
         # prog.AddConstraint(v[k] >= 0)
         # prog.AddConstraint(w[k] >= -np.pi / 4)
         # prog.AddConstraint(w[k] <= np.pi / 4)
-        x_next = x[k] + dt * (v[k] * np.cos(theta[k]) + w[k] * np.sin(theta[k]))
-        y_next = y[k] + dt * (v[k] * np.sin(theta[k]) - w[k] * np.cos(theta[k]))
+
+        x_next = x[k] + dt * (v[k] * np.cos(theta[k]) + w[k] * np.cos(theta[k]))
+        y_next = y[k] + dt * (v[k] * np.sin(theta[k]) + w[k] * np.sin(theta[k]))
         theta_next = theta[k] + dt * w[k]
         prog.AddConstraint(x[k+1] == x_next)
         prog.AddConstraint(y[k+1] == y_next)
@@ -108,7 +117,7 @@ def solve_traj_opt(x_initial, y_initial, theta_initial, x_final, y_final, theta_
     prog.SetInitialGuess(v, v_guess)
     prog.SetInitialGuess(w, w_guess)
     # Set the initial guess for the time and input trajectories
-    prog.SetInitialGuess(tf, 2.0)
+    # prog.SetInitialGuess(tf, 2.0)
 
     # Solve the optimization problem
     result = Solve(prog)
